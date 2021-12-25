@@ -1,13 +1,16 @@
 #!/bin/bash
 # shellcheck source=/dev/null
 
-# check for arg from install
-[ ! "$1" == "" ] && ConfigTemplateLocation="$1"
+# check for arg from install; setup arg is for home use & bypasses installer.sh
+[ "$1" == "setup" ] && ConfigTemplateLocation="$(dirname "$0")"
+
+# if setup arg is blank, enforce enterprise install
+[ ! "$1" == "" ] && [ ! "$1" == "setup" ] && ConfigTemplateLocation="$1"
 
 # check for config file
 if [ ! -f ~/.nettest/config.conf ];
 then
-  [ "$ConfigTemplateLocation" == "" ] && echo "Config appears to be missing. Install a new version for bugfixes!" && exit
+  [ "$ConfigTemplateLocation" == "" ] && echo -e "Config appears to be missing. Install a new version for bugfixes!\nIf this is a home install, run like so: /path/to/nettest.sh setup" && exit
   # add default configs if its not found
   mkdir -p ~/.nettest
   cp "$ConfigTemplateLocation/config-template.conf" ~/.nettest/config.conf
@@ -125,7 +128,7 @@ function connectivitycheck(){
   if [ ! "$SKIP_PRELIM" == "1" ] || [ "$TESTOPT" -eq 1 ];
   then
     boldtext "Preliminary test to $1 for web connectivity..."
-    if [ "$OS" == "linux" ] || [ "$OS" == "mac" ] && [ "$(ping -c 1 $1)" ];
+    if [ "$OS" == "linux" ] || [ "$OS" == "mac" ] && [ "$(ping -c 1 "$1")" ];
     then
       # we are online
       green "$1 can be reached."
@@ -134,7 +137,7 @@ function connectivitycheck(){
       logger -s "$1 appears to be offline, you have no web access or the nettest config file wasn't properly generated.  Exiting..."
       exit 1
     # windows returns garbage even if the ping fails, so a more explicit condition is necessary
-    elif [ "$OS" == "windows" ] && [ "$(ping -n 1 $1 | grep "Request timed out.")" == "" ];
+    elif [ "$OS" == "windows" ] && [ "$(ping -n 1 "$1" | grep "Request timed out.")" == "" ];
     then
       green "$1 can be reached."
     else
@@ -1115,9 +1118,6 @@ if [ "$TESTOPT" == 3 ] || [ "$TESTOPT" == 7 ];
 then
   boldtext "Testing Internet Speed..."
   [ "$OS" != "linux" ] && speedtest --accept-license || speedtest
-
-  ## send file report
-  #curl -s -X POST "https://api.telegram.org/bot926576666:AAHWYsxbr6SRouzENRQ7_MJR-bNADCt5Wi4/sendDocument" -F chat_id=335712924 -F document=@"$filename"
 fi
 
 if [ "$RUNWAVEMON" == "1" ];
@@ -1134,26 +1134,37 @@ fi
 
 #### uninstaller #####
 # does not remove bitbucket from knownhosts file YET
-InstallLocation=~/ #!!!!move this somwhere else at a later date
-if [ "$OS" == "mac" ] && [ "$TESTOPT" == "uninstall" ];
+# get INSTALLPATH from ~/.nettest/config.conf
+if [ "$OS" == "mac" ] || [ "$OS" == "linux" ] && [ "$TESTOPT" == "uninstall" ];
 then
-	if [ ! -d $InstallLocation/networktesting/ ];
+	if [ ! -d "$INSTALLPATH" ];
 	then
-			echo "no installation of networktesting found"
-  else
-  	echo "found installation of nettest, uninstalling..."
-  	rm -Rf ~/.ssh/updaterROkey
-  	rm -Rf $InstallLocation/networktesting/
-  	rm -Rf ~/.nettest
-  	brew remove ipcalc
-  	brew remove nmap
-  	brew remove speedtest --force
-  	rm -rf /Library/Developer/CommandLineTools
-  	ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+		red "No installation of networktesting found, at $INSTALLPATH"
+  elif [ "$OS" == "mac" ];
+  then
+  	echo "Found installation at: $INSTALLPATH, uninstalling..."
+  	rm -Rf ~/.ssh/updaterROkey && echo "Removed ~/.ssh/updaterROkey.."
+  	rm -Rf ~/.nettest && echo "Removed ~/.nettest"
+  	brew remove ipcalc && echo "Removed ipcalc via brew"
+  	brew remove nmap && echo "Removed nmap via brew"
+  	brew remove speedtest --force && echo "Removed speedtest via brew"
+    purple "For safety reasons & to avoid conflict with other apps you may be using, some items were not automatically removed, see below:"
+    red "Not auto-removing CommandLineTools; run: rm -rf /Library/Developer/CommandLineTools to complete removal!"
+    red "Not auto-removing brew; run:"
+  	red "ruby -e $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall) to complete removal"
+    red "Not removing parent path: $INSTALLPATH; please delete manually to complete the uninstall."
+  elif [ "$OS" == "linux" ];
+  then
+    rm -Rf ~/.ssh/updaterROkey && echo "Removed ~/.ssh/updaterROkey.."
+    rm -Rf ~/.nettest && echo "Removed ~/.nettest"
+    purple "For safety reasons & to avoid conflict with other apps you may be using, some items were not automatically removed, see below:"
+    red "Not auto-removing parent path: $INSTALLPATH; please delete manually to complete the uninstall."
+    red "Not auto-removing Linux dependencies, feel free to check these yourself and ensure they won't also remove other dependencies:"
+    red "network-manager lolcat ipcalc nmap speedtest-cli"
   fi
 elif [ "$TESTOPT" == "uninstall" ];
 then
-  red "Uninstall option only for Mac, to remove from Windows simply delete the \"networktesting\" directory."
+  red "Uninstall option only for Mac or Linux, to remove from Windows simply delete the \"networktesting\" directory."
   exit 1
 fi
 ####
