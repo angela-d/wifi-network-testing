@@ -55,7 +55,8 @@ Right-click -> View Image to view full size.
 | #5 (5g channel usage) | <img src="img/5g-test.png" width="100"> |
 | #6 (Access point + channel usage) - appearance varies by OS; Linux looks the coolest | <img src="img/test6-linux.png" width="100"> |
 
-
+### How to Install
+Setup instructions can be found in the [wiki](https://github.com/angela-d/wifi-network-testing/wiki/Before-You-Install-or-Run-the-App)
 
 ### Useful Companion Apps
 - [wavemon](https://github.com/uoaerg/wavemon) - ncurses-based monitoring application for wireless network devices on Linux
