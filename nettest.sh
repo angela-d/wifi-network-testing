@@ -652,10 +652,10 @@ then
 
   # netstat -i gives the tx rate & works on both mac & linux!
 
-  if [ $RSSI > -73 ];
+  if [ $RSSI -ge -73 ];
   then
     green " $RSSI RSSI; Strong Signal"
-  elif [ $RSSI >= -72 ] && [ $RSSI <= -77 ];
+  elif [ $RSSI -ge -72 ] && [ $RSSI -le -77 ];
   then
     yellow " $RSSI RSSI; Fair Signal"
     RUNWAVEMON="1"
@@ -665,10 +665,10 @@ then
   fi
 
   # wifinoise
-  if [ "$WifiNoise" < -90 ];
+  if [ "$WifiNoise" -le -89 ];
   then
     green " $WifiNoise RF Noise Acceptable"
-  elif [ $WifiNoise > -90 ];
+  elif [ $WifiNoise -ge -90 ];
   then
     red " $WifiNoise RF Noise High"
     RUNWAVEMON="1"
