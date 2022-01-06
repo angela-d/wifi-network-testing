@@ -1,4 +1,10 @@
 #!/bin/bash
+
+#
+# read setup wiki first; installer.sh is ONLY for enterprise setups!
+# for basic installs: https://github.com/angela-d/wifi-network-testing/wiki/Home-Install
+#
+
 # read-only repo, like so: git@bitbucket.org:example/
 GIT_REPO_RO=""
 # read-only branch you want to use, like: master
