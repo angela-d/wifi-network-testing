@@ -1,16 +1,21 @@
 # Wifi Network Testing
-Scan your wifi network and obtain troubleshooting details, with extreme granularity.
+Scan your wifi network and obtain troubleshooting details, with extreme granularity; using a colorful command-line tool with no technical skill necessary.   (Assuming you are familiar with git, of course.)
 
-**Obtain the following details**:
+**Obtain the following details about your wifi connection**:
 
-Wifi:
-- Access point/router name you're connected to / SSID
-- Access point/router MAC of the AP you're connected to
-- Channel details; connection cipher/encryption type
-- Nearby router/access point details; strength & MAC info, SSID and neighbor channel utilization
+Wifi statistics:
+- SSID / wifi name / access point / router name you're connected to
+- MAC address & manufacturer details
+- Channel details; connection cipher/encryption for your connection
+- Neighbor details:
+  - Nearby router / access point signal strength (in relation to you)
+  - Their router MAC manufacturer info
+  - SSID (wifi name) and overall neighbor channel utilization
+  - What channel each router is using
+  - How many routers total are on that channel
 
-Connectivity:
-- Connection detection with ping
+Connectivity assessments:
+- Connection detection
 - Speed tests & packet loss
 - IP & DNS information
 - VPN detection
@@ -27,6 +32,7 @@ Connectivity:
 | MacOS              | brew                  | :ballot_box_with_check: |
 | Windows 10         | Git, Bash             | :x: [[details]](https://github.com/angela-d/wifi-network-testing/wiki/Windows-Install)                |
 
+
 ### Screenshots
 
 | Test Option / Install Step            | Image |
@@ -39,18 +45,24 @@ Connectivity:
 | #5 (5g channel usage) | <img src="img/5g-test.png" width="100"> |
 | #6 (Access point + channel usage) - appearance varies by OS; Linux looks the coolest | <img src="img/test6-linux.png" width="100"> |
 
-### How to Install
-Setup instructions:
-- [Home use](https://github.com/angela-d/wifi-network-testing/wiki/Home-Install/) - Single user setup
-- [Enterprise use](https://github.com/angela-d/wifi-network-testing/wiki/Enterprise-Install) - Client machines can pull your codebase from your custom repo
 
-### Useful Companion Apps
+### How to Install
+Select your setup type for steps specific to your use-case:
+- [Home use](https://github.com/angela-d/wifi-network-testing/wiki/Home-Install/) - Single user setup (most common)
+- [Enterprise use](https://github.com/angela-d/wifi-network-testing/wiki/Enterprise-Install) - Client machines can pull your codebase from your custom repo (advanced users only)
+
+
+### Useful Companion Apps (optional)
+Both are currently for Linux only:
 - [wavemon](https://github.com/uoaerg/wavemon) - ncurses-based monitoring application for wireless network devices on Linux
 - [wifi-channel-watcher](https://github.com/angela-d/wifi-channel-watcher) - Monitor channel usage of neighboring routers & get an alert if your active channel is not optimal
+
 
 ### Known Bugs
 - Test # 6 (Access point + channel usage) - any neighboring AP with a space in their SSID (commonly consumer printers) will trigger bash warnings, but will not prevent the script from fully executing
 - Needs linting; some shellcheck specifications broke things on Mac, so additional testing is necessary when cleaning
+
+  - Find other bugs or need help? [Post an issue](https://github.com/angela-d/wifi-network-testing/issues)
 
 ### Credits
 Original iteration of this application was written by my super cool boss.
