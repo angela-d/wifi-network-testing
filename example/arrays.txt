@@ -1,0 +1,4 @@
+Hostname	IAP MAC Address
+1st-Floor-East	000000000000-04
+1st-Floor-West	111111111111-14
+2nd-Floor-Cafeteria	222222222222-24
