@@ -1,25 +1,22 @@
 #!/bin/bash
 # shellcheck source=/dev/null
 
-# check for arg from install; setup arg is for home use & bypasses installer.sh
-[ "$1" == "setup" ] && ConfigTemplateLocation="$(dirname "$0")"
-
-# if setup arg is blank, enforce enterprise install
-[ ! "$1" == "" ] && [ ! "$1" == "setup" ] && ConfigTemplateLocation="$1"
+# assume where we first run from, will be where it lives
+# but check for relative path, first
+ConfigTemplateLocation="$(dirname "$0")"
+[ "$ConfigTemplateLocation" == "." ] && ConfigTemplateLocation="$(pwd)"
 
 # check for config file
 if [ ! -f ~/.nettest/config.conf ];
 then
-  [ "$ConfigTemplateLocation" == "" ] && echo -e "Config appears to be missing. Install a new version for bugfixes!\nIf this is a home install, run like so: /path/to/nettest.sh setup" && exit
   # add default configs if its not found
   mkdir -p ~/.nettest
-  cp "$ConfigTemplateLocation/config-template.conf" ~/.nettest/config.conf
-  echo "INSTALLPATH=$ConfigTemplateLocation" >> ~/.nettest/config.conf
+  cp "$ConfigTemplateLocation/config-template.conf" ~/.nettest/config.conf && echo "INSTALLPATH=$ConfigTemplateLocation" >> ~/.nettest/config.conf
 
   # now call it
   source ~/.nettest/config.conf
 else
-  # pull the config into the application
+  # already exists; pull the config into the application
   source ~/.nettest/config.conf
 fi
 
