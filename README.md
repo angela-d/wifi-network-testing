@@ -9,7 +9,7 @@ Wifi statistics:
 - Channel details; connection cipher/encryption for your connection
 - Neighbor details:
   - Nearby router / access point signal strength (in relation to you)
-  - Their router MAC manufacturer info
+  - Their router MAC & chip manufacturer info
   - SSID (wifi name) and overall neighbor channel utilization
   - What channel each router is using
   - How many routers total are on that channel
@@ -21,8 +21,11 @@ Connectivity assessments:
 - VPN detection
 
 **Optional, built-in enterprise capabilities:**
+
+Useful in scenarios where you're in a multi-access point environment; several routers carrying the same SSID but are posted in different locations throughout your campus.
+
 - Determine whether or not you're on your organization's network / intranet
-- Assign custom AP names to access points/routers at your organization (useful when determining which access point in your building is causing issues, channel overlap or evil twin attacks)
+- Assign custom AP names to access points/routers at your organization (useful when determining which access point in your building is causing issues, such as channel overlap or evil twin attacks)
 
 **Compatible Operating Systems**
 
@@ -37,8 +40,7 @@ Connectivity assessments:
 
 | Test Option / Install Step            | Image |
 | ------------- |:----------------:|
-| Initial Setup (enterprise) | <img src="img/initial-install.png" width="100"> |
-| Initial Setup (home) | <img src="img/initial-setup.png" width="100"> |
+| Initial Setup | <img src="img/initial-setup.png" width="100"> |
 | Main Menu | <img src="img/main-menu.png" width="100"> |
 | #2 (Extended: Basic + packet loss, IP & DNS information) | <img src="img/test2-extended.png" width="100"> |
 | #3 (Basic + speed test only) | <img src="img/test3-speedtest.png" width="100"> |
@@ -47,13 +49,10 @@ Connectivity assessments:
 
 
 ### How to Install
-Select your setup type for steps specific to your use-case:
-- [Home use](https://github.com/angela-d/wifi-network-testing/wiki/Home-Install/) - Single user setup (most common)
-- [Enterprise use](https://github.com/angela-d/wifi-network-testing/wiki/Enterprise-Install) - Client machines can pull your codebase from your custom repo (advanced users only)
-
+- [First Run Steps](https://github.com/angela-d/wifi-network-testing/wiki/First-Run/) - How to install and use wiki
 
 ### Useful Companion Apps (optional)
-Both are currently for Linux only:
+If you find this tool useful, you might also find these handy (both are currently for Linux only):
 - [wavemon](https://github.com/uoaerg/wavemon) - ncurses-based monitoring application for wireless network devices on Linux
 - [wifi-channel-watcher](https://github.com/angela-d/wifi-channel-watcher) - Monitor channel usage of neighboring routers & get an alert if your active channel is not optimal
 
