@@ -125,7 +125,7 @@ function connectivitycheck(){
   if [ ! "$SKIP_PRELIM" == "1" ] || [ "$TESTOPT" -eq 1 ];
   then
     boldtext "Preliminary test to $1 for web connectivity..."
-    if [ "$OS" == "linux" ] || [ "$OS" == "mac" ] && [ "$(ping -c 1 "$1")" ];
+    if [ "$OS" == "linux" ] || [ "$OS" == "mac" ] && [ "$($PINGS -c 1 "$1")" ];
     then
       # we are online
       green "$1 can be reached."
@@ -134,7 +134,7 @@ function connectivitycheck(){
       logger -s "$1 appears to be offline, you have no web access or the nettest config file wasn't properly generated.  Exiting..."
       exit 1
     # windows returns garbage even if the ping fails, so a more explicit condition is necessary
-    elif [ "$OS" == "windows" ] && [ "$(ping -n 1 "$1" | grep "Request timed out.")" == "" ];
+    elif [ "$OS" == "windows" ] && [ "$($PINGS -n 1 "$1" | grep "Request timed out.")" == "" ];
     then
       green "$1 can be reached."
     else
@@ -159,7 +159,7 @@ function internal_network_check(){
   fi
 
   # check external ip from internal_network_check() argument + ping test if conditions are met
-  if [ "$1" == "$NAT_IP" ] && [ ! "$VPN" ] && [[ ! "$VPN" && "$(ping -c 1 "$INTERNAL_CHECK")" ]] ;
+  if [ "$1" == "$NAT_IP" ] && [ ! "$VPN" ] && [[ ! "$VPN" && "$($PINGS -c 1 "$INTERNAL_CHECK")" ]] ;
   then
     INTERNAL_CONN="yes"
     INTERNALscreen=$(green "$INTERNAL_CONN")
@@ -488,6 +488,20 @@ then
   exit 0
 fi
 
+# macs are special with ping, so pull prefs ahead of time
+if [ "$OS"  == 'linux' ] || [ "$OS"  == 'windows' ] && [ "$PINGPROTOCOL"  == '-6' ];
+then
+  PINGS='ping -6'
+elif [ "$OS"  == 'linux' ] || [ "$OS"  == 'windows' ] && [ "$PINGPROTOCOL"  == '-4' ];
+then
+    PINGS='ping -4'
+elif [ "$OS"  == 'mac' ] && [ "$PINGPROTOCOL"  == '-6' ];
+then
+  PINGS='ping6'
+else
+  PINGS='ping'
+fi
+
 # ask the user what they want to do
 testoption
 
@@ -500,19 +514,6 @@ then
   # check an external friendly name domain to make sure there's dns access
   connectivitycheck "$CHECK2"
 fi
-
-# send all ouput to file (unused for now may activate in future)
-
-#    filename=$(date +%Y%m%d-%H%M%S"nettest.txt")
-#    exec &> >(tee -a  $filename)
-#    clear
-
-# send message to telegram that network test has begun (unused for now may activate in future)
-#  curl -s \
-#    -X POST \
-#    https://api.telegram.org/bot926576666:AAHWYsxbr6SRouzENRQ7_MJR-bNADCt5Wi4/sendMessage \
-#    -d text="Creating Network test file ${filename}" \
-#    -d chat_id=335712924 >> /dev/null
 
 iip=$(dig @resolver1.opendns.com ANY myip.opendns.com +short)
 
@@ -994,9 +995,9 @@ then
   function pingOptions {
     if [ "$OS" != 'windows' ];
     then
-      ping "$PINGPROTOCOL" -c 3 -q $1
+      "$PINGS" -c 3 -q $1
     else
-      ping -n 3 $1
+      "$PINGS" -n 3 $1
     fi
   }
 
@@ -1012,9 +1013,9 @@ then
 
       if [ "$OS" != 'windows' ];
       then
-        echo "$(ping "$PINGPROTOCOL" -c 20 -q "$i" | grep "packet loss" | awk -F ',' '{print $3}' | awk '{print $1}')" "packet loss" & spinner
+        echo "$($PINGS -c 20 -q "$i" | grep "packet loss" | awk -F ',' '{print $3}' | awk '{print $1}')" "packet loss" & spinner
       else
-        ping "$i" | grep -o "Lost = .*" & spinner
+        "$PINGS" "$i" | grep -o "Lost = .*" & spinner
       fi
 
       echo
@@ -1035,9 +1036,9 @@ then
 
     if [ "$OS" != 'windows' ];
     then
-      echo "$(ping "$PINGPROTOCOL" -c 20 -q $CHECK1 | grep "packet loss" | awk -F ',' '{print $3}' | awk '{print $1}')" "packet loss" & spinner
+      echo "$($PINGS-c 20 -q $CHECK1 | grep "packet loss" | awk -F ',' '{print $3}' | awk '{print $1}')" "packet loss" & spinner
     else
-      ping -n 20 $CHECK1 | grep -o "Lost = .*" & spinner
+      "$PINGS" -n 20 $CHECK1 | grep -o "Lost = .*" & spinner
     fi
 
   else
