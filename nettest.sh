@@ -1036,7 +1036,7 @@ then
 
     if [ "$OS" != 'windows' ];
     then
-      echo "$($PINGS-c 20 -q $CHECK1 | grep "packet loss" | awk -F ',' '{print $3}' | awk '{print $1}')" "packet loss" & spinner
+      echo "$($PINGS -c 20 -q $CHECK1 | grep "packet loss" | awk -F ',' '{print $3}' | awk '{print $1}')" "packet loss" & spinner
     else
       "$PINGS" -n 20 $CHECK1 | grep -o "Lost = .*" & spinner
     fi
