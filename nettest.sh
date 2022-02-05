@@ -173,6 +173,14 @@ function internal_network_check(){
     fi
   fi
 
+  # cache the ap lookups, otherwise macs will yield macos (23) Failed writing body in some instances
+  if [ $INTERNAL_CONN == 'yes' ] && [ ! "$AP_LIST" == "" ] && [ ! -f ~/.nettest/ap.cache ];
+  then
+    # no cache exists; but a value is set, pull a local copy
+    italic "Generating a AP cache, please wait..."
+    curl -sS -C - "$AP_LIST" > ~/.nettest/ap.cache
+    sleep 2
+  fi
 }
 
 # code that's called multiple times should be in a function, so it doesn't get needlessly repeated and bloat up the place
@@ -357,11 +365,11 @@ function apsearch() {
   then
     # lookup what array you're connected to, based on bssid
     AP=$(echo "$1" | tr -d ':')
-    AP=$(curl -sS "$AP_LIST" | grep -i "$AP" | head -n1 | awk '{ print $1 }')
+    AP=$(cat ~/.nettest/ap.cache | grep -i "$AP" | head -n1 | awk '{ print $1 }')
 
     if [ "$AP" == "" ];
     then
-      AP="Unknown (External)"
+      AP="(External)"
     fi
 
     # this turd is duplicating, why?
@@ -921,13 +929,13 @@ then
     fi
 
     # this loop seems super heavy, but i don't know a better way to do it atm
-    UNCLEANSSID="$(echo "$ARRAYCHAN" | awk -v ucssidawk="$(($AWKCOL+1))" '{ print $ucssidawk }')"
-    BSSID="$(echo "$ARRAYCHAN" | awk -v bssidawk="$(($AWKCOL+2))" '{ print $bssidawk }')"
-    IAP="$(echo "$ARRAYCHAN" | awk -v iapawk="$(($AWKCOL+3))" '{ print $iapawk }')"
-    FREQ="$(echo "$ARRAYCHAN" | awk -v freqawk="$(($AWKCOL+4))" -v freqmhz="$(("$AWKCOL"+5))" -v strawk="$(("$AWKCOL"+6))" '{ print $freqawk $freqmhz  " " $strawk }')"
-    SIGNAL="$(echo "$ARRAYCHAN" | awk -v sigawk="$(($AWKCOL+7))" '{ print $sigawk }')"
+    UNCLEANSSID="$(echo "$ARRAYCHAN" | cut -d ' ' -f1-"$((AWKCOL+1))")"
+    BSSID="$(echo "$ARRAYCHAN" | awk -v bssidawk="$((AWKCOL+2))" '{ print $bssidawk }')"
+    IAP="$(echo "$ARRAYCHAN" | awk -v iapawk="$((AWKCOL+3))" '{ print $iapawk }')"
+    FREQ="$(echo "$ARRAYCHAN" | awk -v freqawk="$((AWKCOL+4))" -v freqmhz="$((AWKCOL+5))" -v strawk="$((AWKCOL+6))" '{ print $freqawk $freqmhz  " " $strawk }')"
+    SIGNAL="$(echo "$ARRAYCHAN" | awk -v sigawk="$((AWKCOL+7))" '{ print $sigawk }')"
     # ssid is sanitized since it returns values to the screen created by untrusted individuals, because, you never know :)
-    SSID="${UNCLEANSSID//[^a-zA-Z0-9\_-]/}"
+    SSID="${UNCLEANSSID//[^a-zA-Z0-9 \_-]/}"
 
     if [ "$INTERNAL_CONN" == "yes" ];
     then
@@ -974,15 +982,14 @@ then
       # set the awk column + whatever the addl count is, as we prob have spaces, then
       AWKCOL=$(($COUNTSPACES-7))
     fi
-    # echo "$(($X+$Y))"
 
     # this loop seems super heavy, but i don't know a better way to do it atm
-    UNCLEANSSID="$(echo "$ARRAYCHAN" | awk -v ucssidawk="$(($AWKCOL+1))" '{ print $ucssidawk }')"
-    MAC="$(echo "$ARRAYCHAN" | awk -v bssidawk="$(($AWKCOL+2))" '{ print $bssidawk }')"
-    RSSID="$(echo "$ARRAYCHAN" | awk -v rssidawk="$(($AWKCOL+3))"  '{ print $rssidawk }')"
-    IAP="$(echo "$ARRAYCHAN" | awk -v iapawk="$(($AWKCOL+4))" '{ print $iapawk }')"
+    UNCLEANSSID="$(echo "$ARRAYCHAN" | awk '{ print $1 }')"
+    MAC="$(echo "$ARRAYCHAN" | awk -v bssidawk="$((AWKCOL+2))" '{ print $bssidawk }')"
+    RSSID="$(echo "$ARRAYCHAN" | awk -v rssidawk="$((AWKCOL+3))"  '{ print $rssidawk }')"
+    IAP="$(echo "$ARRAYCHAN" | awk -v iapawk="$((AWKCOL+4))" '{ print $iapawk }')"
     # ssid is sanitized since it returns values to the screen created by untrusted individuals, because, you never know :)
-    SSID="${UNCLEANSSID//[^a-zA-Z0-9\_-]/}"
+    SSID="${UNCLEANSSID//[^a-zA-Z0-9\_ -]/}"
 
     if [ "$INTERNAL_CONN" == "yes" ];
     then
