@@ -58,7 +58,8 @@ If you find this tool useful, you might also find these handy (both are currentl
 
 
 ### Known Bugs
-- Test # 6 (Access point + channel usage) - any neighboring AP with a space in their SSID (commonly consumer printers) will trigger bash warnings, but will not prevent the script from fully executing
+- Test # 6 (Access point + channel usage) - All OS - SSIDs with spaces will get snipped (only the first word appears as the SSID during the test)
+- Test # 6 (Access point + channel usage) - Mac only, the following may appear: `grep (23) Failed writing body` during the airport scan.
 - Needs linting; some shellcheck specifications broke things on Mac, so additional testing is necessary when cleaning
 
   - Find other bugs or need help? [Post an issue](https://github.com/angela-d/wifi-network-testing/issues)
