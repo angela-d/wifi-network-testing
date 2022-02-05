@@ -900,18 +900,32 @@ if [ "$TESTOPT" == 6 ] && [ "$OS" == "linux" ];
 then
   boldtext "Determining channel usage by array..."
   yellow "Sorted descending by signal strength"
-  # if someone has a space in their ssid (printers, usually) the layout (for that entry) gets jacked up
-  IFS=$'\n'
-  declare -a CHAN=($(nmcli -f ssid,bssid,chan,freq,bars,signal dev wifi list | tail -n +2 | tr " " "\ "))
+
+  # if someone has a space in their ssid (printers, usually) the preceeding words are cut
+  while IFS=$'\n' read -r line; do
+    CHAN+=("$line")
+  done < <(nmcli -f ssid,bssid,chan,freq,bars,signal dev wifi list | tail -n +2)
 
   for ARRAYCHAN in "${CHAN[@]}"
   do
+    # determine whether or not this is an ssid with spaces and if so, adjust awk columns accordingly
+    # we expect 7 columns only
+    COUNTSPACES="$(wc -w <<< "$ARRAYCHAN")"
+    if [ "$COUNTSPACES" -eq 7 ];
+    then
+      # this person is not a turd and has no spaces in ssid
+      AWKCOL=0
+    else
+      # set the awk column + whatever the addl count is, as we prob have spaces, then
+      AWKCOL=$(($COUNTSPACES-7))
+    fi
+
     # this loop seems super heavy, but i don't know a better way to do it atm
-    IAP="$(echo "$ARRAYCHAN" | awk '{ print $3 }')"
-    FREQ="$(echo "$ARRAYCHAN" | awk '{ print $4$5  " " $6 }')"
-    SIGNAL="$(echo "$ARRAYCHAN" | awk '{ print $7 }')"
-    UNCLEANSSID="$(echo "$ARRAYCHAN" | awk '{ print $1 }')"
-    BSSID="$(echo "$ARRAYCHAN" | awk '{ print $2 }')"
+    UNCLEANSSID="$(echo "$ARRAYCHAN" | awk -v ucssidawk="$(($AWKCOL+1))" '{ print $ucssidawk }')"
+    BSSID="$(echo "$ARRAYCHAN" | awk -v bssidawk="$(($AWKCOL+2))" '{ print $bssidawk }')"
+    IAP="$(echo "$ARRAYCHAN" | awk -v iapawk="$(($AWKCOL+3))" '{ print $iapawk }')"
+    FREQ="$(echo "$ARRAYCHAN" | awk -v freqawk="$(($AWKCOL+4))" -v freqmhz="$(("$AWKCOL"+5))" -v strawk="$(("$AWKCOL"+6))" '{ print $freqawk $freqmhz  " " $strawk }')"
+    SIGNAL="$(echo "$ARRAYCHAN" | awk -v sigawk="$(($AWKCOL+7))" '{ print $sigawk }')"
     # ssid is sanitized since it returns values to the screen created by untrusted individuals, because, you never know :)
     SSID="${UNCLEANSSID//[^a-zA-Z0-9\_-]/}"
 
@@ -942,19 +956,33 @@ then
 
   boldtext "Determining channel usage by array..."
   yellow "Sorted ascending by signal strength"
-  # if someone has a space in their ssid (printers, usually) the layout (for that entry) gets jacked up
-  IFS=$'\n'
-  declare -a CHAN=($("$AIRPORT" -s | tail -n +2 |  tr " " "\ "))
+  # if someone has a space in their ssid (printers, usually) preceeding words get cut
+  while IFS=$'\n' read -r line; do
+    CHAN+=("$line")
+  done < <("$AIRPORT" -s | tail -n +2)
 
   for ARRAYCHAN in "${CHAN[@]}"
   do
+    # determine whether or not this is an ssid with spaces and if so, adjust awk columns accordingly
+    # we expect 7 columns only
+    COUNTSPACES="$(wc -w <<< "$ARRAYCHAN")"
+    if [ "$COUNTSPACES" -eq 7 ];
+    then
+      # this person is not a turd and has no spaces in ssid
+      AWKCOL=0
+    else
+      # set the awk column + whatever the addl count is, as we prob have spaces, then
+      AWKCOL=$(($COUNTSPACES-7))
+    fi
+    # echo "$(($X+$Y))"
+
     # this loop seems super heavy, but i don't know a better way to do it atm
-    IAP="$(echo "$ARRAYCHAN" | awk '{ print $4 }')"
-    UNCLEANSSID="$(echo "$ARRAYCHAN" | awk '{ print $1 }')"
-    RSSID="$(echo "$ARRAYCHAN" | awk '{ print $3 }')"
+    UNCLEANSSID="$(echo "$ARRAYCHAN" | awk -v ucssidawk="$(($AWKCOL+1))" '{ print $ucssidawk }')"
+    MAC="$(echo "$ARRAYCHAN" | awk -v bssidawk="$(($AWKCOL+2))" '{ print $bssidawk }')"
+    RSSID="$(echo "$ARRAYCHAN" | awk -v rssidawk="$(($AWKCOL+3))"  '{ print $rssidawk }')"
+    IAP="$(echo "$ARRAYCHAN" | awk -v iapawk="$(($AWKCOL+4))" '{ print $iapawk }')"
     # ssid is sanitized since it returns values to the screen created by untrusted individuals, because, you never know :)
     SSID="${UNCLEANSSID//[^a-zA-Z0-9\_-]/}"
-    MAC="$(echo "$ARRAYCHAN" | awk '{ print $2 }')"
 
     if [ "$INTERNAL_CONN" == "yes" ];
     then
@@ -1040,7 +1068,6 @@ then
     else
       "$PINGS" -n 20 $CHECK1 | grep -o "Lost = .*" & spinner
     fi
-
   else
     red "Connection is DOWN"
   fi
