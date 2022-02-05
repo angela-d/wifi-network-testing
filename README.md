@@ -58,11 +58,7 @@ If you find this tool useful, you might also find these handy (both are currentl
 
 
 ### Known Bugs
-- Test # 6 (Access point + channel usage) - All OS - SSIDs with spaces will get snipped (only the first word appears as the SSID during the test)
-- Test # 6 (Access point + channel usage) - Mac only, the following may appear: `grep (23) Failed writing body` during the airport scan.
-- Needs linting; some shellcheck specifications broke things on Mac, so additional testing is necessary when cleaning
-
-  - Find other bugs or need help? [Post an issue](https://github.com/angela-d/wifi-network-testing/issues)
+There's a few [cosmetic bugs](https://github.com/angela-d/wifi-network-testing/wiki/Known-Bugs/) that don't affect performance.
 
 ### Credits
 Original iteration of this application was written by my super cool boss.
