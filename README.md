@@ -46,6 +46,7 @@ Useful in scenarios where you're in a multi-access point environment; several ro
 | #3 (Basic + speed test only) | <img src="img/test3-speedtest.png" width="100"> |
 | #5 (5g channel usage) | <img src="img/5g-test.png" width="100"> |
 | #6 (Access point + channel usage) - appearance varies by OS; Linux looks the coolest | <img src="img/test6-linux.png" width="100"> |
+| Channel lookup (Linux only) | <img src="img/channel-lookup.png" width="100"> |
 
 
 ### How to Install
