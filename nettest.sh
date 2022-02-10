@@ -192,7 +192,7 @@ function macinstall () {
     brew install "$1"
   elif [ "$1" == "speedtest" ];
   then
-    brew tap teamookla/speedtest
+    brew tap speedtest-cli
     brew update
     brew install "$1" --force
   fi
@@ -204,6 +204,7 @@ function linuxinstall () {
   if [ -f /usr/bin/apt ];
   then
     # make sure user has sudo access to apt at the minimum
+    # shellcheck disable=2143
     if [ "$(sudo -l | grep /usr/bin/apt)" ] || [ "$(sudo -l)" != "" ];
     then
       if [ ! "$1" == "network-manager" ];
@@ -256,7 +257,7 @@ function checkfor() {
       if [ "$1" == "brew" ];
       then
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-        brew tap teamookla/speedtest
+        brew tap speedtest-cli
       fi
 
       # rest of the dependencies install
@@ -365,7 +366,7 @@ function apsearch() {
   then
     # lookup what array you're connected to, based on bssid
     AP=$(echo "$1" | tr -d ':')
-    AP=$(cat ~/.nettest/ap.cache | grep -i "$AP" | head -n1 | awk '{ print $1 }')
+    AP=$( (grep -i "$AP" | head -n1 | awk '{ print $1 }') < ~/.nettest/ap.cache)
 
     if [ "$AP" == "" ];
     then
@@ -389,7 +390,7 @@ function apsearch() {
 function channeltest() {
   for channel in $1;
   do
-    if [ "$channel" -ge 1 -a "$channel" -le 13 ] >>/dev/null 2>&1;
+    if [ "$channel" -ge 1 ] && [ "$channel" -le 13 ] >>/dev/null 2>&1;
     then
       RADIO=2.4GHz
     else
@@ -414,7 +415,7 @@ then
   INTERFACE="$(cat < /proc/net/wireless | awk '{print $1}' | tail -n1 | tr -d .:)"
 
   # check if a channel is being passed as a manual search
-  if [ "$1" == "search" ] && [ ! -z "$2" ];
+  if [ "$1" == "search" ] && [ -n "$2" ];
   then
     CHANNEL="$2"
   elif [ "$1" == "c" ];
@@ -425,10 +426,10 @@ then
   boldtext "$(super "Access Points Using Channel $CHANNEL")"
 
   ## duplication of an existing loop, wasn't sure how else to achieve this ##
-  # if someone has a space in their ssid (printers, usually) the layout (for that entry) gets jacked up
-  IFS=$'\n'
   # chmatch works, but there's an accuracy bug for things like 1 and 11.. need to fix
-  declare -a CHAN=($(nmcli -f ssid,bssid,chan,freq,bars,signal dev wifi list | awk -v chmatch="^$CHANNEL$" '$3 ~ chmatch' |  tr "  " "\ "))
+  while IFS=$'\n' read -r line; do
+    CHAN+=("$line")
+  done < <(nmcli -f ssid,bssid,chan,freq,bars,signal dev wifi list | awk -v chmatch="^$CHANNEL$" '$3 ~ chmatch')
 
   for ARRAYCHAN in "${CHAN[@]}"
   do
@@ -487,7 +488,7 @@ then
   checkfor "lolcat" "linux"
 
   # check for speedtest
-  checkfor "speedtest" "mac"
+  checkfor "speedtest-cli" "mac"
   checkfor "speedtest-cli" "linux"
 
   # add a config var, so we don't waste time checking for dependencies next time we run this script on this machine
@@ -542,11 +543,25 @@ then
 
   if [ "$OS" != 'windows' ];
   then
-    ips=($($IFCFG | grep "inet " | grep -v 127.0.0.1 | awk '{ print $2 }' | tr '\r\n' ' '))
-    mask=($($IFCFG | grep 'netmask ' | grep -v 127.0.0.1 | awk '{ print $4 }' | tr '\r\n' ' '))
+    # SC2207 - due to macos bash (v)3.2
+    ips=()
+    while IFS='' read -r ipline;
+    do
+      ips+=("$ipline");
+    done < <($IFCFG | grep "inet " | grep -v 127.0.0.1 | awk '{ print $2 }')
+
+    mask=()
+    while IFS='' read -r maskline;
+    do
+      mask+=("$maskline");
+    done < <($IFCFG | grep 'netmask ' | grep -v 127.0.0.1 | awk '{ print $4 }')
+
   else
     # grep an expression to only show ipv4 ip addresses
+    # shellcheck disable=SC2178
+    # sc complains about the ips & mask array; windows vars are handled differently
     ips=$(ipconfig //all | grep -o "IPv4 Address.*" | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | tr '\r\n' ' ')
+    # shellcheck disable=SC2178
     mask=$(ipconfig //all | grep -o "Subnet Mask.*" | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | tr '\r\n' ' ')
   fi
 
@@ -595,7 +610,10 @@ then
       CIDRarray+=("$CIDRs")
     done
 
+    # sc - false pos due to win/mac sharing var identifiers
+    # shellcheck disable=SC2178
     ips=$(printf %s" " "${IParray[@]}")
+    # shellcheck disable=SC2178
     mask=$(printf %s" " "${MASKarray[@]}")
     CIDR=$(printf %s" " "${CIDRarray[@]}")
 
@@ -610,10 +628,13 @@ then
     fi
 
     # Send to screen
+    # sc false pos for unindexed arrays; which is latching onto windows vars that don't utilize them
     boldtext "Network Info"
     twocol "External IP:" "$iip"
+    # shellcheck disable=SC2128
     twocol "Internal IP:" "$ips"
     twocol "Gateway:" "$gateway"
+    # shellcheck disable=SC2128
     twocol "Netmask:" "$mask"
     twocol "CIDR:" "$CIDR"
     twocol "DNS:" "$ns"
@@ -658,10 +679,10 @@ then
 
   # netstat -i gives the tx rate & works on both mac & linux!
 
-  if [ $RSSI -ge -73 ];
+  if [ "$RSSI" -ge -73 ];
   then
     green " $RSSI RSSI; Strong Signal"
-  elif [ $RSSI -ge -72 ] && [ $RSSI -le -77 ];
+  elif [ "$RSSI" -ge -72 ] && [ "$RSSI" -le -77 ];
   then
     yellow " $RSSI RSSI; Fair Signal"
     RUNWAVEMON="1"
@@ -674,7 +695,7 @@ then
   if [ "$WifiNoise" -le -89 ];
   then
     green " $WifiNoise RF Noise Acceptable"
-  elif [ $WifiNoise -ge -90 ];
+  elif [ "$WifiNoise" -ge -90 ];
   then
     red " $WifiNoise RF Noise High"
     RUNWAVEMON="1"
@@ -688,7 +709,7 @@ then
   # convert hex to decimal
   IFS=: read -ra arr <<< "$BSSID"
   printf -v str "%02s:" "${arr[@]}"
-  BSSID=$(echo "${str%:}")
+  BSSID=${str%:}
 
   # lookup BSSID command to find vendor
   if [ ! "$BSSID" == "" ]
@@ -713,9 +734,9 @@ then
     RSSI="$(cat < /proc/net/wireless | awk '{print $4}' | tail -n1 | tr -d .)"
     QUALITY="$(cat < /proc/net/wireless | awk '{print $3}' | tail -n1 | tr -d .)"
     QUALITYDESC="$(rescol "$QUALITY/70" "Link Quality is")"
-    CHANNEL="$(/sbin/iw dev "$INTERFACE" info | grep channel)"
+    CHANNEL=$(/sbin/iw dev "$INTERFACE" info | grep channel | awk '{print $2 }')
     SIGNALDESC="received signal strength on $SSID"
-    CIPHER="$(/sbin/iwlist "$INTERFACE" scan | egrep "Group Cipher" | head -n 1 | awk '{ print $4 }')"
+    CIPHER="$(/sbin/iwlist "$INTERFACE" scan | grep -E "Group Cipher" | head -n 1 | awk '{ print $4 }')"
   else
     INTERFACE=$(netsh wlan show interfaces | grep Name | awk '{print $3}')
     SSID=$(netsh wlan show interfaces | grep SSID | grep -v BSSID | awk '{print $3}')
@@ -925,7 +946,7 @@ then
       AWKCOL=0
     else
       # set the awk column + whatever the addl count is, as we prob have spaces, then
-      AWKCOL=$(($COUNTSPACES-7))
+      AWKCOL=$((COUNTSPACES-7))
     fi
 
     # this loop seems super heavy, but i don't know a better way to do it atm
@@ -980,7 +1001,7 @@ then
       AWKCOL=0
     else
       # set the awk column + whatever the addl count is, as we prob have spaces, then
-      AWKCOL=$(($COUNTSPACES-7))
+      AWKCOL=$((COUNTSPACES-7))
     fi
 
     # this loop seems super heavy, but i don't know a better way to do it atm
@@ -1030,9 +1051,9 @@ then
   function pingOptions {
     if [ "$OS" != 'windows' ];
     then
-      "$PINGS" -c 3 -q $1
+      "$PINGS" -c 3 -q "$1"
     else
-      "$PINGS" -n 3 $1
+      "$PINGS" -n 3 "$1"
     fi
   }
 
@@ -1064,16 +1085,16 @@ then
   boldtext "Testing Connection to Internet..."
 
   # if have connectivity then ping an internet address
-  if pingOptions $CHECK1 >/dev/null;
+  if pingOptions "$CHECK1" >/dev/null;
   then
     green "Connection is UP"
     echo "Testing packet loss..."
 
     if [ "$OS" != 'windows' ];
     then
-      echo "$($PINGS -c 20 -q $CHECK1 | grep "packet loss" | awk -F ',' '{print $3}' | awk '{print $1}')" "packet loss" & spinner
+      echo "$($PINGS -c 20 -q "$CHECK1" | grep "packet loss" | awk -F ',' '{print $3}' | awk '{print $1}')" "packet loss" & spinner
     else
-      "$PINGS" -n 20 $CHECK1 | grep -o "Lost = .*" & spinner
+      "$PINGS" -n 20 "$CHECK1" | grep -o "Lost = .*" & spinner
     fi
   else
     red "Connection is DOWN"
@@ -1089,16 +1110,16 @@ then
   do
     ptr=$(host "$dnsServer" | sed 's/Name: //' | sed 's/ .*//g' | head -n 1)
 
-    if dig @"$dnsServer" -t ns $ORG_DNS | grep -qai "$ORGNAME";
+    if dig @"$dnsServer" -t ns "$ORG_DNS" | grep -qai "$ORGNAME";
     then
       whitebold "From $dnsServer"
       green "$dnsServer -- $ptr OK"
 
       for domain in $ORG_DNS apple.com bbc.co.uk;
       do \
-        system_dns=$(dig @"$dnsServer" ${domain} | awk '/msec/{print $4}');\
-        quad9_dns=$(dig @"$CHECK1" ${domain} | awk '/msec/{print $4}');\
-        cloudflare_dns=$(dig @1.1.1.1 ${domain} | awk '/msec/{print $4}'); \
+        system_dns=$(dig @"$dnsServer" "${domain}" | awk '/msec/{print $4}');\
+        quad9_dns=$(dig @"$CHECK1" "${domain}" | awk '/msec/{print $4}');\
+        cloudflare_dns=$(dig @1.1.1.1 "${domain}" | awk '/msec/{print $4}'); \
         echo -e "${domain}\t Workstation DNS ${system_dns}ms\tCloudFlare DNS ${cloudflare_dns}ms\tQuad9 DNS ${quad9_dns}ms\n"
       done
     else
@@ -1117,20 +1138,10 @@ then
   while [ $x -le 5 ]
   do
     curlArray+=("$(curl -o /dev/null -sL -w '%{time_total}' "$LATENCY_DEST" | tail -1)")
-    # shows test number
-    # echo "Test: " $x
-    x=$(( $x + 1 ))
+    x=$(( x + 1 ))
   done
-
-  curlOutput=$(printf %s" " "${curlArray[@]}")
-  # show array output
-  # echo $curlOutput
 
   sum=$( IFS="+"; bc <<< "${curlArray[*]}" )
-
-  for i in "${thearray[@]}"; do
-    sum=$(echo $sum + $i | bc -l);
-  done
 
   # get average of responses
   average=$( echo "scale=8; $sum / ${#curlArray[@]}" | bc -l )
@@ -1149,7 +1160,12 @@ fi
 if [ "$TESTOPT" == 3 ] || [ "$TESTOPT" == 7 ];
 then
   boldtext "Testing Internet Speed..."
-  [ "$OS" != "linux" ] && speedtest --accept-license || speedtest
+  if [ "$OS" == "windows" ];
+  then
+    speedtest --accept-license
+  else
+    speedtest
+  fi
 fi
 
 if [ "$RUNWAVEMON" == "1" ];
@@ -1179,7 +1195,7 @@ then
   	rm -Rf ~/.nettest && echo "Removed ~/.nettest"
   	brew remove ipcalc && echo "Removed ipcalc via brew"
   	brew remove nmap && echo "Removed nmap via brew"
-  	brew remove speedtest --force && echo "Removed speedtest via brew"
+  	brew remove speedtest-cli --force && echo "Removed speedtest via brew"
     purple "For safety reasons & to avoid conflict with other apps you may be using, some items were not automatically removed, see below:"
     red "Not auto-removing CommandLineTools; run: rm -rf /Library/Developer/CommandLineTools to complete removal!"
     red "Not auto-removing brew; run:"
@@ -1199,14 +1215,14 @@ then
   red "Uninstall option only for Mac or Linux, to remove from Windows simply delete the \"networktesting\" directory."
   exit 1
 fi
-####
-
-exit
 
 # export a var to indicate the default test had already run
 DEFAULT_TEST_RAN="1"
 export DEFAULT_TEST_RAN
 
-# reload the menu
-readonly reload_menu="$(filepath "$0")"
-$reload_menu
+# reload the menu after each test?
+if [ "$RELOAD_MENU" -eq 1 ];
+then
+  MAIN_MENU=$(filepath "$0")
+  "$MAIN_MENU"
+fi
