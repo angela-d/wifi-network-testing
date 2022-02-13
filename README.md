@@ -11,8 +11,8 @@ Wifi statistics:
   - Nearby router / access point signal strength (in relation to you)
   - Their router MAC & chip manufacturer info
   - SSID (wifi name) and overall neighbor channel utilization
-  - What channel each router is using
-  - How many routers total are on that channel
+  - What channel each router or AP is using
+  - How many routers/APs total are on that channel
 
 Connectivity assessments:
 - Connection detection
@@ -22,7 +22,7 @@ Connectivity assessments:
 
 **Optional, built-in enterprise capabilities:**
 
-Useful in scenarios where you're in a multi-access point environment; several routers carrying the same SSID but are posted in different locations throughout your campus.
+Useful in scenarios where you're in a multi-access point environment; several APs carrying the same SSID but are posted in different locations throughout your campus.
 
 - Determine whether or not you're on your organization's network / intranet
 - Assign custom AP names to access points/routers at your organization (useful when determining which access point in your building is causing issues, such as channel overlap or evil twin attacks)
@@ -55,7 +55,7 @@ Useful in scenarios where you're in a multi-access point environment; several ro
 ### Useful Companion Apps (optional)
 If you find this tool useful, you might also find these handy (both are currently for Linux only):
 - [wavemon](https://github.com/uoaerg/wavemon) - ncurses-based monitoring application for wireless network devices on Linux
-- [wifi-channel-watcher](https://github.com/angela-d/wifi-channel-watcher) - Monitor channel usage of neighboring routers & get an alert if your active channel is not optimal
+- [wifi-channel-watcher](https://github.com/angela-d/wifi-channel-watcher) - Monitor channel usage of neighboring routers/access points & get an alert if your active channel is not optimal
 
 
 ### Known Bugs
