@@ -33,7 +33,7 @@ then
 
   # add an addl env, so we can import some applications without needing them 'installed'
   # this is what allows us to run dig, host & bc w/out specifying paths to the exe's
-  ADDL_EXE=~/networktesting/windows/bind9:~/networktesting/windows/bc:~/networktesting/windows/speedtest:~/networktesting/windows/ipcalc
+  ADDL_EXE="$INSTALLPATH"/windows/bind9:"$INSTALLPATH"/windows/bc:"$INSTALLPATH"/windows/speedtest:"$INSTALLPATH"/windows/ipcalc
   export PATH=$ADDL_EXE:$PATH
 fi
 
