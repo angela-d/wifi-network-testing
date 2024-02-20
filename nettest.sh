@@ -847,7 +847,7 @@ fi
     echo -e "52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140\n"
     # 40 MHz is not accessible in most of the arrays to-date
     yellow "N/AC Channels - 40 MHz (Lower interference, shorter reach)"
-    echo -e "38, 46, 54, 62, 102, 110, 118, 126, 134, 134, 142, 151, 159\n"
+    echo -e "38, 46, 54, 62, 102, 110, 118, 126, 134, 142, 151, 159\n"
     yellow "AC Channels - 80 MHz (Wider, greater interference)"
     echo -e "42, 58, 106, 122, 138, 155\n"
   }
